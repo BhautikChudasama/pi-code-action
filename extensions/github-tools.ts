@@ -203,19 +203,61 @@ export default function (pi: ExtensionAPI) {
 
   if (prNumber) {
     pi.registerTool({
+      name: "get_pr_diff",
+      label: "Get PR Diff",
+      description:
+        "Fetch the unified diff for the current pull request. Use this BEFORE create_inline_comment to see the actual diff line numbers.",
+      promptSnippet: "Fetch the PR diff to see changed files and line numbers",
+      promptGuidelines: [
+        "ALWAYS call get_pr_diff BEFORE using create_inline_comment.",
+        "The diff shows the actual line numbers you need for inline comments.",
+      ],
+      parameters: Type.Object({}),
+      async execute() {
+        try {
+          const resp = await fetch(
+            `${apiUrl}/repos/${owner}/${repo}/pulls/${prNumber}`,
+            {
+              headers: {
+                Authorization: `Bearer ${githubToken}`,
+                Accept: "application/vnd.github.v3.diff",
+              },
+            },
+          );
+          if (!resp.ok) throw new Error(`GitHub API ${resp.status}`);
+          const diff = await resp.text();
+          // Truncate very large diffs
+          const maxLen = 50000;
+          const truncated = diff.length > maxLen ? diff.substring(0, maxLen) + "\n... (truncated)" : diff;
+          return {
+            content: [{ type: "text", text: truncated }],
+            details: {},
+          };
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : String(error);
+          return {
+            content: [{ type: "text", text: `Error fetching diff: ${msg}` }],
+            details: {},
+          };
+        }
+      },
+    });
+
+    pi.registerTool({
       name: "create_inline_comment",
       label: "Inline Comment",
       description:
-        "Post an inline review comment on a specific file and line in the PR diff. Use this for code review feedback pinpointed to exact locations.",
+        "Post an inline review comment on a specific file and line in the PR diff. IMPORTANT: The 'line' parameter must be the line number as shown in the NEW file side of the diff (the + lines), NOT from reading the source file directly. Always use get_pr_diff first to see the correct line numbers.",
       promptSnippet: "Post inline review comments on PR diff lines",
       promptGuidelines: [
-        "Use create_inline_comment to leave feedback on specific lines in the PR diff.",
-        "Always specify the exact file path and line number from the diff.",
+        "ALWAYS call get_pr_diff first to see the diff before posting inline comments.",
+        "The 'line' must be the line number in the NEW version of the file (right side of diff, the + lines).",
+        "Do NOT use line numbers from reading the file with the read tool -- use the diff line numbers.",
         "Use side RIGHT for added/modified lines, LEFT for deleted lines.",
       ],
       parameters: Type.Object({
         path: Type.String({ description: "File path relative to repo root" }),
-        line: Type.Number({ description: "Line number in the diff" }),
+        line: Type.Number({ description: "Line number in the NEW version of the file as shown in the diff (the + side). NOT from reading the file directly." }),
         body: Type.String({ description: "Comment text in markdown" }),
         side: Type.Optional(
           Type.String({

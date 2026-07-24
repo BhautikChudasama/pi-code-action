@@ -91,6 +91,7 @@ export async function prepareTagMode({
     "read", "bash", "edit", "write", "grep", "find", "ls",
     "update_tracking_comment",
     "get_ci_status",
+    "get_pr_diff",
     "create_inline_comment",
   ];
   let piArgs = "";
