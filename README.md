@@ -1,4 +1,8 @@
-# Pi Code Action
+<p align="center">
+  <img src="assets/pi-logo-animation.gif" width="80" height="80" alt="Pi Logo" />
+</p>
+
+<h1 align="center">Pi Code Action</h1>
 
 A GitHub Action that brings [Pi](https://pi.dev) coding agent to your issues and pull requests. Mention `@pi` in a comment and it gets to work -- reviewing code, implementing features, fixing bugs, rebasing branches, and more.
 
