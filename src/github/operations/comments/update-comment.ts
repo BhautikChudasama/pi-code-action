@@ -100,20 +100,18 @@ export async function updateTrackingComment(opts: UpdateCommentOptions): Promise
   // If so, preserve Pi's live content and just prepend the header.
   let liveContent: string | undefined;
   try {
-    let currentComment;
+    let commentData: { body?: string; created_at: string; updated_at: string };
     if (opts.isPullRequestReviewComment) {
       const resp = await octokit.pulls.getReviewComment({ owner, repo, comment_id: commentId });
-      currentComment = resp.data.body;
+      commentData = resp.data;
     } else {
       const resp = await octokit.issues.getComment({ owner, repo, comment_id: commentId });
-      currentComment = resp.data.body;
+      commentData = resp.data;
     }
-    // If comment no longer contains the spinner, Pi updated it live
-    const hasSpinner = currentComment?.includes("user-attachments/assets/5ac382c7");
-    const hasJobRunLink = currentComment?.includes("/actions/runs/");
-    if (currentComment && !hasSpinner && hasJobRunLink) {
-      // Comment was already updated live — don't overwrite with raw text dump
-      liveContent = currentComment;
+    // If comment was edited after creation, Pi updated it live
+    const wasEdited = commentData.created_at !== commentData.updated_at;
+    if (wasEdited && commentData.body) {
+      liveContent = commentData.body;
     }
   } catch {
     // Can't read current comment, proceed with normal update
