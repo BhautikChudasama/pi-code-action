@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/pi-icon.png" width="80" height="80" alt="Pi Logo" />
+  <img src="assets/pi-logo.png" width="80" height="80" alt="Pi Logo" />
 </p>
 
 <h1 align="center">Pi Code Action</h1>
