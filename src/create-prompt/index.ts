@@ -71,13 +71,16 @@ C. CODE REVIEW (e.g. "review this", "check the code"):
    - Do NOT make code changes unless explicitly asked.
 
 D. CODE CHANGE (e.g. "fix this", "add X", "implement Y", "initialize Z"):
-   - Make the changes, commit, and push.
-   - You are already on branch: ${workingBranch || baseBranch}. Do NOT create new branches.
+${workingBranch ? `   - You are already on the PR branch: ${workingBranch}. Do NOT create new branches.
    - Git workflow: \`git add <files>\` -> \`git commit -m "<message>\\n\\nCo-authored-by: ${context.actor} <${context.actor}@users.noreply.github.com>"\` -> \`git push origin HEAD\`
-${workingBranch ? `   - After pushing, include a PR link:
-     [Create a PR](${GITHUB_SERVER_URL}/${repository}/compare/${baseBranch}...${workingBranch}?quick_pull=1&title=<url-encoded-title>&body=<url-encoded-body>)
-     Use THREE dots (...) between branches. URL-encode all parameters.` : ""}
-   - Update your comment with a checklist as you work:
+` : `   - You need to create a branch first since this is an issue (not a PR):
+     \`git checkout -b pi/issue-${githubData.issueOrPrNumber}-$(date +%s) origin/${baseBranch}\`
+   - Then make changes, commit, and push:
+     \`git add <files>\` -> \`git commit -m "<message>\\n\\nCo-authored-by: ${context.actor} <${context.actor}@users.noreply.github.com>"\` -> \`git push origin HEAD\`
+   - After pushing, include a PR link:
+     [Create a PR](${GITHUB_SERVER_URL}/${repository}/compare/${baseBranch}...<your-branch-name>?quick_pull=1&title=<url-encoded-title>&body=<url-encoded-body>)
+     Use THREE dots (...) between branches. URL-encode all parameters.
+`}   - Update your comment with a checklist as you work:
      - [ ] task 1
      - [x] completed task
 

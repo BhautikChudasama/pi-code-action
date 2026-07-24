@@ -11,8 +11,10 @@ import type { Octokits } from "../../github/api/client";
 /**
  * Prepares tag mode execution context.
  *
- * Tag mode responds to @pi mentions, issue assignments, or labels.
- * Creates tracking comments and has full implementation capabilities.
+ * Key behavior (mirrors claude-code-action):
+ * - On PRs: checkout existing PR branch (no new branch)
+ * - On issues: DON'T create branch eagerly. Pi decides if code changes are needed.
+ *   Git auth is configured so Pi can create branches/push if it needs to.
  */
 export async function prepareTagMode({
   context,
@@ -43,27 +45,48 @@ export async function prepareTagMode({
     triggerUsername: context.actor,
   });
 
-  // Setup branch
-  const branchInfo = await setupBranch(octokit, githubData, context);
-
-  // Configure git auth
+  // Configure git auth (always needed for potential push operations)
   const user = {
     login: context.inputs.botName,
     id: parseInt(context.inputs.botId),
   };
   await configureGitAuth(githubToken, context, user);
 
+  // Branch setup depends on context:
+  // - PRs: checkout existing PR branch
+  // - Issues: don't create branch eagerly -- Pi will decide if it needs one
+  let baseBranch: string;
+  let workingBranch: string | undefined;
+
+  if (context.isPR) {
+    // For PRs, checkout the existing PR branch
+    const branchInfo = await setupBranch(octokit, githubData, context);
+    baseBranch = branchInfo.baseBranch;
+    workingBranch = branchInfo.currentBranch; // existing PR branch, no new branch
+  } else {
+    // For issues, just determine base branch -- don't create a new one
+    if (context.inputs.baseBranch) {
+      baseBranch = context.inputs.baseBranch;
+    } else {
+      const { data: repoData } = await octokit.rest.repos.get({
+        owner: context.repository.owner,
+        repo: context.repository.repo,
+      });
+      baseBranch = repoData.default_branch;
+    }
+    // workingBranch stays undefined -- Pi creates one only if it needs to commit
+  }
+
   // Create prompt file
   await createPrompt(
     commentId,
-    branchInfo.baseBranch,
-    branchInfo.claudeBranch,
+    baseBranch,
+    workingBranch,
     githubData,
     context,
   );
 
   // Build Pi CLI args for tag mode
-  // Include built-in tools AND our custom extension tools
   const tagModeTools = [
     "read", "bash", "edit", "write", "grep", "find", "ls",
     "update_tracking_comment",
@@ -122,7 +145,11 @@ export async function prepareTagMode({
 
   return {
     commentId,
-    branchInfo,
+    branchInfo: {
+      baseBranch,
+      claudeBranch: workingBranch, // undefined for issues (no branch created)
+      currentBranch: workingBranch || baseBranch,
+    },
     piArgs: piArgs.trim(),
     isPullRequestReviewComment: commentData.isPullRequestReviewComment,
   };
