@@ -102,6 +102,10 @@ export async function prepareTagMode({
     // workingBranch stays undefined -- Pi creates one only if it needs to commit
   }
 
+  // Detect available integrations (used in prompt + extension loading)
+  const hasPostgres = !!process.env.DATABASE_URL;
+  const hasK8s = !!process.env.KUBECONFIG || !!process.env.KUBE_NAMESPACE || !!process.env.KUBE_CONTEXT;
+
   // Create prompt file
   await createPrompt(
     commentId,
@@ -109,6 +113,7 @@ export async function prepareTagMode({
     workingBranch,
     githubData,
     context,
+    { hasPostgres, hasK8s },
   );
 
   // Build Pi CLI args for tag mode
@@ -140,6 +145,26 @@ export async function prepareTagMode({
 
   // Load web search extension (keyless -- uses Brave/DuckDuckGo)
   piArgs += ` -e npm:pi-web-extension`;
+
+  // Auto-load postgres extension if DATABASE_URL is set
+  if (hasPostgres) {
+    const pgPath = `${process.env.GITHUB_ACTION_PATH}/extensions/postgres-tools.ts`;
+    piArgs += ` -e ${pgPath}`;
+    tagModeTools.push("pg_query", "pg_schema", "pg_table_info", "pg_explain", "pg_connections");
+    console.log("Postgres tools enabled (DATABASE_URL detected)");
+  }
+
+  // Auto-load kubernetes extension if kubectl/kubeconfig is available
+  if (hasK8s) {
+    const k8sPath = `${process.env.GITHUB_ACTION_PATH}/extensions/kubernetes-tools.ts`;
+    piArgs += ` -e ${k8sPath}`;
+    tagModeTools.push(
+      "k8s_get", "k8s_describe", "k8s_logs", "k8s_events",
+      "k8s_rollout_status", "k8s_top", "k8s_delete_pod",
+      "k8s_rollout_restart", "k8s_exec",
+    );
+    console.log("Kubernetes tools enabled (KUBECONFIG/KUBE_NAMESPACE detected)");
+  }
 
   // Set env vars for the extension
   process.env.REPO_OWNER = context.repository.owner;
