@@ -4,7 +4,11 @@ import { isPullRequestReviewCommentEvent } from "../../context";
 
 const GITHUB_SERVER_URL = process.env.GITHUB_SERVER_URL || "https://github.com";
 
-/** Animated spinner (same as claude-code-action) */
+/** Pi logo icon */
+const PI_LOGO_HTML =
+  '<img src="https://raw.githubusercontent.com/BhautikChudasama/pi-code-action/main/assets/pi-icon.png" width="14px" height="14px" style="vertical-align: middle;" />';
+
+/** Animated spinner */
 const SPINNER_HTML =
   '<img src="https://github.com/user-attachments/assets/5ac382c7-e004-429b-8e35-7feb3e8f9c6f" width="14px" height="14px" style="vertical-align: middle; margin-left: 4px;" />';
 
@@ -13,7 +17,7 @@ export function createJobRunLink(owner: string, repo: string, runId: string): st
 }
 
 function createCommentBody(jobRunLink: string): string {
-  return `${SPINNER_HTML}
+  return `${PI_LOGO_HTML} ${SPINNER_HTML}
 
 ${jobRunLink}`;
 }
