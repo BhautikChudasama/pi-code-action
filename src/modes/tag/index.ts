@@ -129,12 +129,17 @@ export async function prepareTagMode({
     "request_reviewers",
     "rebase_branch",
     "get_conflict_files",
+    "web_search",
+    "web_fetch",
   ];
   let piArgs = "";
 
   // Load our GitHub tools extension
   const extensionPath = `${process.env.GITHUB_ACTION_PATH}/extensions/github-tools.ts`;
   piArgs += ` -e ${extensionPath}`;
+
+  // Load web search extension (keyless -- uses Brave/DuckDuckGo)
+  piArgs += ` -e npm:pi-web-extension`;
 
   // Set env vars for the extension
   process.env.REPO_OWNER = context.repository.owner;
