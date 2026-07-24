@@ -116,10 +116,19 @@ export async function prepareTagMode({
     "read", "bash", "edit", "write", "grep", "find", "ls",
     "update_tracking_comment",
     "get_ci_status",
+    "get_workflow_run_details",
+    "download_job_log",
     "get_pr_diff",
     "create_inline_comment",
     "list_review_comments",
     "resolve_review_thread",
+    "add_labels",
+    "remove_labels",
+    "close_issue",
+    "create_issue",
+    "request_reviewers",
+    "rebase_branch",
+    "get_conflict_files",
   ];
   let piArgs = "";
 
@@ -134,7 +143,10 @@ export async function prepareTagMode({
   process.env.IS_PR_REVIEW_COMMENT = commentData.isPullRequestReviewComment ? "true" : "false";
   if (context.isPR) {
     process.env.PR_NUMBER = context.entityNumber.toString();
+  } else {
+    process.env.ISSUE_NUMBER = context.entityNumber.toString();
   }
+  process.env.BASE_BRANCH = baseBranch;
 
   // Set tools (must include extension tools or they get blocked)
   piArgs += ` --tools ${tagModeTools.join(",")}`;
