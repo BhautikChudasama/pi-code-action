@@ -118,6 +118,8 @@ export async function prepareTagMode({
     "get_ci_status",
     "get_pr_diff",
     "create_inline_comment",
+    "list_review_comments",
+    "resolve_review_thread",
   ];
   let piArgs = "";
 

@@ -305,5 +305,100 @@ export default function (pi: ExtensionAPI) {
         }
       },
     });
+
+    // ── Tool 5: List Review Comments ──
+
+    pi.registerTool({
+      name: "list_review_comments",
+      label: "List Review Comments",
+      description:
+        "List all review comments on the current PR with their IDs, resolved status, file paths, and content. Use this to see which review threads exist and which need to be resolved.",
+      promptSnippet: "List all PR review comments with their status",
+      parameters: Type.Object({}),
+      async execute() {
+        try {
+          const comments = (await githubApi(
+            `/repos/${owner}/${repo}/pulls/${prNumber}/comments?per_page=100`,
+          )) as Array<{
+            id: number;
+            body: string;
+            path: string;
+            line: number | null;
+            user: { login: string };
+            in_reply_to_id?: number;
+            created_at: string;
+          }>;
+
+          const formatted = comments.map((c) => ({
+            id: c.id,
+            author: c.user.login,
+            path: c.path,
+            line: c.line,
+            body: c.body.substring(0, 200),
+            is_reply: !!c.in_reply_to_id,
+            parent_id: c.in_reply_to_id || null,
+          }));
+
+          return {
+            content: [
+              { type: "text", text: JSON.stringify(formatted, null, 2) },
+            ],
+            details: {},
+          };
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : String(error);
+          return {
+            content: [{ type: "text", text: `Error listing comments: ${msg}` }],
+            details: {},
+          };
+        }
+      },
+    });
+
+    // ── Tool 6: Resolve Review Thread ──
+
+    pi.registerTool({
+      name: "resolve_review_thread",
+      label: "Resolve Thread",
+      description:
+        "Resolve (minimize) a PR review comment thread by posting a resolution reply. Use this after verifying that the issue raised in a review comment has been fixed.",
+      promptSnippet: "Resolve a PR review comment thread",
+      promptGuidelines: [
+        "Use list_review_comments first to see which threads exist.",
+        "Only resolve threads where the issue has actually been fixed in the code.",
+        "The comment_id should be the ID of the TOP-LEVEL review comment (not a reply).",
+      ],
+      parameters: Type.Object({
+        comment_id: Type.Number({ description: "ID of the top-level review comment to resolve" }),
+        message: Type.Optional(Type.String({ description: "Optional resolution message (e.g. 'Fixed in latest commit')" })),
+      }),
+      async execute(_toolCallId, params) {
+        try {
+          // Reply to the thread indicating it's resolved
+          const body = params.message || "Resolved -- this has been addressed.";
+          await githubApi(
+            `/repos/${owner}/${repo}/pulls/${prNumber}/comments/${params.comment_id}/replies`,
+            {
+              method: "POST",
+              body: { body },
+            },
+          );
+
+          return {
+            content: [
+              { type: "text", text: `Thread ${params.comment_id} resolved with reply.` },
+            ],
+            details: {},
+          };
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : String(error);
+          return {
+            content: [{ type: "text", text: `Error resolving thread: ${msg}` }],
+            details: {},
+          };
+        }
+      },
+    });
   }
 }
+
