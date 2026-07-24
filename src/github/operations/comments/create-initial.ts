@@ -13,9 +13,7 @@ export function createJobRunLink(owner: string, repo: string, runId: string): st
 }
 
 function createCommentBody(jobRunLink: string): string {
-  return `Pi is working… ${SPINNER_HTML}
-
-I'll analyze this and get back to you.
+  return `${SPINNER_HTML}
 
 ${jobRunLink}`;
 }
