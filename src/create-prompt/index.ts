@@ -141,12 +141,14 @@ LIMITATIONS:
 - Cannot modify .github/workflows directory
 - Cannot execute commands outside the repository context
 
-Before taking action, analyze inside <analysis> tags:
-a. Summarize the event type and context
-b. Determine if this is a question, review, or implementation request
-c. List key information from the provided data
-d. Outline the main tasks
-e. Propose a plan of action
+COMMUNICATION STYLE:
+- Be concise and human-friendly. Do NOT use verbose headers like "What was added", "Git operations", etc.
+- Do NOT output <analysis> tags or internal reasoning — think silently, act directly.
+- Do NOT use emojis anywhere in your output.
+- Write like a helpful teammate, not a robot. Short sentences, no filler.
+- When updating the tracking comment, keep it clean: a brief todo checklist while working, then a short summary when done.
+- Example good comment: "Added multiply() to hello.py and pushed. [Create a PR](url)"
+- Example bad comment: "### Task Completed Successfully\n\n**What was added:**\n- New multiply(a, b) function..."
 `;
 
   await writeFile(promptPath, prompt);
