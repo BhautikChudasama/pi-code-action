@@ -85,7 +85,7 @@ For issues that need code changes, Pi creates a branch and pushes commits. For q
 
 ## Tools
 
-Pi comes with 18 built-in tools plus web search:
+Pi comes with 18 built-in tools plus web search, and optional integrations for PostgreSQL and Kubernetes:
 
 | Category | Tools |
 |---|---|
@@ -96,6 +96,49 @@ Pi comes with 18 built-in tools plus web search:
 | Issue Management | `add_labels`, `remove_labels`, `close_issue`, `create_issue` |
 | PR Management | `request_reviewers`, `rebase_branch`, `get_conflict_files` |
 | Web | `web_search`, `web_fetch` (via [pi-web-extension](https://www.npmjs.com/package/pi-web-extension)) |
+| PostgreSQL | `pg_query`, `pg_schema`, `pg_table_info`, `pg_explain`, `pg_connections` |
+| Kubernetes | `k8s_get`, `k8s_describe`, `k8s_logs`, `k8s_events`, `k8s_rollout_status`, `k8s_top`, `k8s_delete_pod`, `k8s_rollout_restart`, `k8s_exec` |
+
+PostgreSQL and Kubernetes tools activate automatically when the right env vars are set (see below).
+
+## PostgreSQL Integration
+
+Set `DATABASE_URL` and Pi can query your database, inspect schemas, and debug slow queries. All queries are **read-only** -- INSERT, UPDATE, DELETE, DROP, and TRUNCATE are blocked.
+
+```yaml
+- uses: BhautikChudasama/pi-code-action@main
+  with:
+    # ... provider, model, api_key, base_url
+  env:
+    DATABASE_URL: ${{ secrets.DATABASE_URL }}
+```
+
+Then ask things like:
+- `@pi show me the schema of the users table`
+- `@pi why is this query slow?` -- runs EXPLAIN ANALYZE
+- `@pi how many active connections are there?`
+
+## Kubernetes Integration
+
+Set `KUBECONFIG` or `KUBE_NAMESPACE` and Pi can inspect your cluster, read logs, and restart pods. Destructive operations are blocked -- no deleting PVCs, PVs, secrets, namespaces. No port-forward, no apply, no secret access.
+
+```yaml
+- uses: BhautikChudasama/pi-code-action@main
+  with:
+    # ... provider, model, api_key, base_url
+  env:
+    KUBECONFIG: ${{ secrets.KUBECONFIG }}
+    KUBE_NAMESPACE: production  # optional default namespace
+```
+
+Then ask things like:
+- `@pi are all pods healthy?`
+- `@pi show me the logs for the api pod`
+- `@pi why is the deployment stuck?` -- checks events and rollout status
+- `@pi restart the api deployment`
+- `@pi what's the CPU/memory usage?`
+
+Pod deletion is allowed (for stuck/crashlooping pods), but only one at a time -- no wildcards or `--all`.
 
 ## Configuration
 
@@ -145,7 +188,9 @@ Any OpenAI-compatible API works. Set `provider: openai`, your `model` ID, and `b
 pi-code-action/
   action.yml                          # GitHub Action definition
   extensions/
-    github-tools.ts                   # 16 custom tools (comments, CI, review, labels, rebase...)
+    github-tools.ts                   # GitHub tools (comments, CI, review, labels, rebase...)
+    postgres-tools.ts                 # PostgreSQL tools (read-only queries, schema, explain)
+    kubernetes-tools.ts               # Kubernetes tools (pods, logs, events, rollout, exec)
   src/
     entrypoints/
       run.ts                          # Main orchestrator (prepare → install → run → cleanup)
