@@ -26,8 +26,53 @@ export default function (pi: ExtensionAPI) {
   const namespace = process.env.KUBE_NAMESPACE || "";
   const nsFlag = namespace ? `-n ${namespace}` : "";
 
+  /** Blocked kubectl operations */
+  const BLOCKED_COMMANDS = [
+    "port-forward", "proxy", "attach", "cp",
+    "auth", "certificate", "token",
+    "cordon", "uncordon", "drain", "taint",
+    "replace", "patch", "apply", "create",
+    "edit", "scale", "autoscale",
+    "cluster-info dump",
+  ];
+
+  /** Resource types that must never be read or deleted */
+  const BLOCKED_RESOURCES = [
+    "secret", "secrets",
+    "pvc", "persistentvolumeclaim", "persistentvolumeclaims",
+    "pv", "persistentvolume", "persistentvolumes",
+    "namespace", "namespaces", "ns",
+    "clusterrole", "clusterroles",
+    "clusterrolebinding", "clusterrolebindings",
+    "serviceaccount", "serviceaccounts", "sa",
+  ];
+
+  /** Validate kubectl args before execution */
+  function validateKubectlArgs(args: string): string | null {
+    const lower = args.toLowerCase().trim();
+
+    for (const cmd of BLOCKED_COMMANDS) {
+      if (lower.startsWith(cmd) || lower.includes(` ${cmd}`)) {
+        return `Refused: '${cmd}' is not allowed.`;
+      }
+    }
+
+    // Check if any blocked resource is being accessed
+    for (const res of BLOCKED_RESOURCES) {
+      const pattern = new RegExp(`\\b${res}\\b`, "i");
+      if (pattern.test(lower)) {
+        return `Refused: access to '${res}' resources is not allowed.`;
+      }
+    }
+
+    return null;
+  }
+
   /** Run kubectl and return output */
   function kubectl(args: string, timeoutMs = 30000): string {
+    const blocked = validateKubectlArgs(args);
+    if (blocked) throw new Error(blocked);
+
     try {
       return execSync(`kubectl ${args}`, {
         encoding: "utf-8",
@@ -48,7 +93,7 @@ export default function (pi: ExtensionAPI) {
     description: "List Kubernetes resources (pods, deployments, services, configmaps, jobs, cronjobs, ingresses, etc.). Returns a table of resources with their status.",
     promptSnippet: "List Kubernetes resources",
     parameters: Type.Object({
-      resource: Type.String({ description: "Resource type: pods, deployments, services, configmaps, secrets, jobs, cronjobs, ingresses, nodes, namespaces, hpa, daemonsets, statefulsets, replicasets" }),
+      resource: Type.String({ description: "Resource type: pods, deployments, services, configmaps, jobs, cronjobs, ingresses, nodes, hpa, daemonsets, statefulsets, replicasets. NOTE: secrets, PVCs, PVs, namespaces, and serviceaccounts are blocked." }),
       namespace: Type.Optional(Type.String({ description: "Namespace (overrides default)" })),
       selector: Type.Optional(Type.String({ description: "Label selector (e.g. app=myapp)" })),
       all_namespaces: Type.Optional(Type.Boolean({ description: "List across all namespaces" })),
