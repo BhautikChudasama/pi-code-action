@@ -14,6 +14,8 @@ export interface UpdateCommentOptions {
   executionOutput?: string;
   /** Wall-clock start time (ms since epoch) for accurate duration */
   startTimeMs?: number;
+  /** Whether the comment is a PR review comment (needs different API) */
+  isPullRequestReviewComment?: boolean;
 }
 
 /**
@@ -111,10 +113,35 @@ export async function updateTrackingComment(opts: UpdateCommentOptions): Promise
     body += "\n_No text output from Pi._";
   }
 
-  await octokit.issues.updateComment({
-    owner,
-    repo,
-    comment_id: commentId,
-    body: body.trim(),
-  });
+  // Use correct API based on comment type (like claude-code-action)
+  try {
+    if (opts.isPullRequestReviewComment) {
+      await octokit.pulls.updateReviewComment({
+        owner,
+        repo,
+        comment_id: commentId,
+        body: body.trim(),
+      });
+    } else {
+      await octokit.issues.updateComment({
+        owner,
+        repo,
+        comment_id: commentId,
+        body: body.trim(),
+      });
+    }
+  } catch (error: unknown) {
+    // Fallback: if PR review comment update fails with 404, try issue comment API
+    const status = (error as { status?: number }).status;
+    if (opts.isPullRequestReviewComment && status === 404) {
+      await octokit.issues.updateComment({
+        owner,
+        repo,
+        comment_id: commentId,
+        body: body.trim(),
+      });
+    } else {
+      throw error;
+    }
+  }
 }

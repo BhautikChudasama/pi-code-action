@@ -105,5 +105,6 @@ export async function prepareTagMode({
     commentId,
     branchInfo,
     piArgs: piArgs.trim(),
+    isPullRequestReviewComment: commentData.isPullRequestReviewComment,
   };
 }

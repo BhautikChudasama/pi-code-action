@@ -91,6 +91,7 @@ export interface PrepareResult {
   commentId?: number;
   branchInfo: BranchInfo;
   piArgs: string;
+  isPullRequestReviewComment?: boolean;
 }
 
 export interface GitHubData {

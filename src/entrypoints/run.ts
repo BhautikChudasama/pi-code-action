@@ -208,6 +208,7 @@ async function run() {
   let prepareError: string | undefined;
   let context: GitHubContext | undefined;
   let octokit: Octokits | undefined;
+  let isPullRequestReviewComment = false;
   const startTimeMs = Date.now();
 
   try {
@@ -254,6 +255,7 @@ async function run() {
     commentId = prepareResult.commentId;
     claudeBranch = prepareResult.branchInfo.claudeBranch;
     baseBranch = prepareResult.branchInfo.baseBranch;
+    isPullRequestReviewComment = prepareResult.isPullRequestReviewComment || false;
     prepareCompleted = true;
 
     // Phase 2: Install Pi CLI
@@ -311,6 +313,7 @@ async function run() {
           error: prepareError,
           executionOutput,
           startTimeMs,
+          isPullRequestReviewComment,
         });
       } catch (error) {
         console.error("Error updating tracking comment:", error);
