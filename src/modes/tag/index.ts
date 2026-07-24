@@ -63,7 +63,13 @@ export async function prepareTagMode({
   );
 
   // Build Pi CLI args for tag mode
-  const tagModeTools = ["read", "bash", "edit", "write", "grep", "find", "ls"];
+  // Include built-in tools AND our custom extension tools
+  const tagModeTools = [
+    "read", "bash", "edit", "write", "grep", "find", "ls",
+    "update_tracking_comment",
+    "get_ci_status",
+    "create_inline_comment",
+  ];
   let piArgs = "";
 
   // Load our GitHub tools extension
@@ -79,7 +85,7 @@ export async function prepareTagMode({
     process.env.PR_NUMBER = context.entityNumber.toString();
   }
 
-  // Set tools
+  // Set tools (must include extension tools or they get blocked)
   piArgs += ` --tools ${tagModeTools.join(",")}`;
 
   // Set model and provider
