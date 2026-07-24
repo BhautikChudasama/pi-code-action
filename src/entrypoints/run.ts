@@ -208,6 +208,7 @@ async function run() {
   let prepareError: string | undefined;
   let context: GitHubContext | undefined;
   let octokit: Octokits | undefined;
+  const startTimeMs = Date.now();
 
   try {
     // Phase 1: Prepare
@@ -309,6 +310,7 @@ async function run() {
           baseBranch: baseBranch || "main",
           error: prepareError,
           executionOutput,
+          startTimeMs,
         });
       } catch (error) {
         console.error("Error updating tracking comment:", error);

@@ -1,6 +1,6 @@
 import type { Octokit } from "@octokit/rest";
 import type { EntityContext } from "../../types";
-import { parsePiOutput } from "../../../utils/parse-pi-output";
+import { parsePiOutput, cleanPiResponseForComment } from "../../../utils/parse-pi-output";
 
 export interface UpdateCommentOptions {
   commentId: number;
@@ -12,34 +12,63 @@ export interface UpdateCommentOptions {
   error?: string;
   /** Raw JSONL output from Pi CLI */
   executionOutput?: string;
+  /** Wall-clock start time (ms since epoch) for accurate duration */
+  startTimeMs?: number;
 }
 
 /**
  * Update the tracking comment with final status and Pi's response.
- * Mirrors claude-code-action's comment format:
- *   Header (with duration + links) → separator → Pi's response content
+ * Matches claude-code-action's format:
+ *   **Pi finished @user's task in Xm Ys** —— [View job] • [`branch`] • [Create PR ➔]
+ *   ---
+ *   <Pi's cleaned response>
  */
 export async function updateTrackingComment(opts: UpdateCommentOptions): Promise<void> {
-  const { commentId, context, octokit, success, branchName, error, executionOutput } = opts;
+  const {
+    commentId,
+    context,
+    octokit,
+    success,
+    branchName,
+    baseBranch,
+    error,
+    executionOutput,
+    startTimeMs,
+  } = opts;
 
-  // Parse Pi's JSONL output to extract text and metadata
+  const serverUrl = process.env.GITHUB_SERVER_URL || "https://github.com";
+  const { owner, repo } = context.repository;
+  const runId = process.env.GITHUB_RUN_ID;
+
+  // Parse Pi's JSONL output
   let piText = "";
+  let prLinkFromResponse: string | undefined;
   let durationStr = "";
-  let model = "";
   if (executionOutput) {
     const parsed = parsePiOutput(executionOutput);
-    piText = parsed.text;
-    model = parsed.model || "";
+    const { cleanedText, prLink } = cleanPiResponseForComment(parsed.text);
+    piText = cleanedText;
+    prLinkFromResponse = prLink;
 
-    if (parsed.durationMs) {
-      const totalSeconds = Math.round(parsed.durationMs / 1000);
+    // Duration: prefer wall-clock time, fallback to JSONL timestamps
+    const durationMs = startTimeMs
+      ? Date.now() - startTimeMs
+      : parsed.durationMs;
+    if (durationMs && durationMs > 0) {
+      const totalSeconds = Math.round(durationMs / 1000);
       const minutes = Math.floor(totalSeconds / 60);
       const seconds = totalSeconds % 60;
       durationStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
     }
+  } else if (startTimeMs) {
+    const durationMs = Date.now() - startTimeMs;
+    const totalSeconds = Math.round(durationMs / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    durationStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
   }
 
-  // Build header (like claude-code-action)
+  // Build header
   let header = "";
   if (success) {
     header = `**Pi finished @${context.actor}'s task`;
@@ -51,27 +80,22 @@ export async function updateTrackingComment(opts: UpdateCommentOptions): Promise
     header += "**";
   }
 
-  // Build links section
-  const serverUrl = process.env.GITHUB_SERVER_URL || "https://github.com";
-  const runId = process.env.GITHUB_RUN_ID;
+  // Build links (same line as header, like claude-code-action)
   let links = "";
   if (runId) {
-    const jobUrl = `${serverUrl}/${context.repository.owner}/${context.repository.repo}/actions/runs/${runId}`;
+    const jobUrl = `${serverUrl}/${owner}/${repo}/actions/runs/${runId}`;
     links += ` —— [View job](${jobUrl})`;
   }
-
   if (branchName) {
-    const branchUrl = `${serverUrl}/${context.repository.owner}/${context.repository.repo}/tree/${branchName}`;
+    const branchUrl = `${serverUrl}/${owner}/${repo}/tree/${branchName}`;
     links += ` • [\`${branchName}\`](${branchUrl})`;
   }
-
-  // Build the comment body
-  let body = `${header}${links}`;
-
-  // Add model info
-  if (model) {
-    body += `\n\n_Model: ${model}_`;
+  if (prLinkFromResponse) {
+    links += ` • [Create PR ➔](${prLinkFromResponse})`;
   }
+
+  // Assemble body
+  let body = `${header}${links}`;
 
   // Add error details
   if (!success && error) {
@@ -80,7 +104,7 @@ export async function updateTrackingComment(opts: UpdateCommentOptions): Promise
 
   body += "\n\n---\n";
 
-  // Add Pi's response text
+  // Add Pi's cleaned response
   if (piText) {
     body += `\n${piText}`;
   } else if (!error) {
@@ -88,8 +112,8 @@ export async function updateTrackingComment(opts: UpdateCommentOptions): Promise
   }
 
   await octokit.issues.updateComment({
-    owner: context.repository.owner,
-    repo: context.repository.repo,
+    owner,
+    repo,
     comment_id: commentId,
     body: body.trim(),
   });
