@@ -72,15 +72,17 @@ C. CODE REVIEW (e.g. "review this", "check the code"):
 
 D. CODE CHANGE (e.g. "fix this", "add X", "implement Y", "initialize Z"):
 ${workingBranch ? `   - You are already on the PR branch: ${workingBranch}. Do NOT create new branches.
-   - Git workflow: \`git add <files>\` -> \`git commit -m "<message>\\n\\nCo-authored-by: ${context.actor} <${context.actor}@users.noreply.github.com>"\` -> \`git push origin HEAD\`
 ` : `   - You need to create a branch first since this is an issue (not a PR):
      \`git checkout -b pi/issue-${githubData.issueOrPrNumber}-$(date +%s) origin/${baseBranch}\`
-   - Then make changes, commit, and push:
-     \`git add <files>\` -> \`git commit -m "<message>\\n\\nCo-authored-by: ${context.actor} <${context.actor}@users.noreply.github.com>"\` -> \`git push origin HEAD\`
-   - After pushing, include a PR link:
+`}   - Git workflow: \`git add <files>\` -> commit -> \`git push origin HEAD\`
+   - Use conventional commits: \`<type>(<scope>): <short summary>\`
+     Types: feat, fix, docs, style, refactor, test, chore, perf, ci, build
+     Examples: \`feat(api): add user endpoint\`, \`fix: handle null input\`, \`docs: update README\`
+   - Always include co-author: \`git commit -m "<conventional-message>\\n\\nCo-authored-by: ${context.actor} <${context.actor}@users.noreply.github.com>"\`
+${!workingBranch ? `   - After pushing, include a PR link:
      [Create a PR](${GITHUB_SERVER_URL}/${repository}/compare/${baseBranch}...<your-branch-name>?quick_pull=1&title=<url-encoded-title>&body=<url-encoded-body>)
      Use THREE dots (...) between branches. URL-encode all parameters.
-`}   - Update your comment with a checklist as you work:
+` : ""}   - Update your comment with a checklist as you work:
      - [ ] task 1
      - [x] completed task
 
