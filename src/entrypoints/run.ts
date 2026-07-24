@@ -7,7 +7,7 @@
 
 import * as core from "@actions/core";
 import { dirname } from "path";
-import { spawn } from "child_process";
+import { spawn, execSync } from "child_process";
 import { appendFile } from "fs/promises";
 import { readFileSync } from "fs";
 import { setupGitHubToken } from "../github/token";
@@ -66,14 +66,27 @@ async function installPi(): Promise<string> {
       });
       console.log("Pi CLI installed successfully");
 
-      // Add to PATH
-      const homeBin = `${process.env.HOME}/.local/bin`;
-      const githubPath = process.env.GITHUB_PATH;
-      if (githubPath) {
-        await appendFile(githubPath, `${homeBin}\n`);
+      // Pi installs via npm install -g, so find the actual binary location
+      // Try: npm global bin, then common paths, then `which`
+      let piPath: string | undefined;
+      try {
+        const npmBin = execSync("npm prefix -g", { encoding: "utf-8" }).trim() + "/bin";
+        piPath = `${npmBin}/pi`;
+        const githubPath = process.env.GITHUB_PATH;
+        if (githubPath) {
+          await appendFile(githubPath, `${npmBin}\n`);
+        }
+        process.env.PATH = `${npmBin}:${process.env.PATH}`;
+      } catch {
+        // Fallback: use `which` to find pi
+        try {
+          piPath = execSync("which pi", { encoding: "utf-8" }).trim();
+        } catch {
+          piPath = "pi"; // Hope it's on PATH
+        }
       }
-      process.env.PATH = `${homeBin}:${process.env.PATH}`;
-      return `${homeBin}/pi`;
+      console.log(`Pi executable: ${piPath}`);
+      return piPath;
     } catch (error) {
       if (attempt === 3) {
         throw new Error(`Failed to install Pi CLI after 3 attempts: ${error}`);
