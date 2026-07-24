@@ -101,14 +101,33 @@ async function runPi(
   console.log(`Running Pi: ${cmd}`);
 
   return new Promise((resolve) => {
+    const piEnv: Record<string, string | undefined> = {
+      ...process.env,
+      // Disable telemetry and update checks in CI
+      PI_TELEMETRY: "0",
+      PI_SKIP_VERSION_CHECK: "1",
+    };
+
+    // Forward provider API key to the correct env var Pi expects
+    const apiKey = process.env.PI_API_KEY;
+    const provider = process.env.PI_PROVIDER || "openai";
+    if (apiKey) {
+      // Set provider-specific env vars Pi reads natively
+      piEnv.OPENAI_API_KEY = apiKey;
+      piEnv.ANTHROPIC_API_KEY = apiKey;
+      piEnv.GOOGLE_API_KEY = apiKey;
+      piEnv.DEEPSEEK_API_KEY = apiKey;
+    }
+
+    // Forward base URL for OpenAI-compatible endpoints
+    const baseUrl = process.env.PI_BASE_URL;
+    if (baseUrl) {
+      piEnv.OPENAI_BASE_URL = baseUrl;
+    }
+
     const child = spawn("bash", ["-c", cmd], {
       stdio: "inherit",
-      env: {
-        ...process.env,
-        // Disable telemetry and update checks in CI
-        PI_TELEMETRY: "0",
-        PI_SKIP_VERSION_CHECK: "1",
-      },
+      env: piEnv,
     });
 
     child.on("close", (code) => {

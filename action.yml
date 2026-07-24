@@ -42,6 +42,10 @@ inputs:
     description: "Newline-separated list of Pi extensions to load (npm packages, git repos, or local paths)"
     required: false
     default: ""
+  base_url:
+    description: "Custom base URL for OpenAI-compatible endpoints (e.g. https://my-proxy.example.com/v1)"
+    required: false
+    default: ""
   pi_args:
     description: "Additional arguments to pass directly to Pi CLI"
     required: false
@@ -152,14 +156,16 @@ runs:
         PI_THINKING_LEVEL: ${{ inputs.thinking_level }}
         PI_TOOLS: ${{ inputs.pi_tools }}
         PI_EXTENSIONS: ${{ inputs.extensions }}
+        PI_BASE_URL: ${{ inputs.base_url }}
         PI_MAX_COST: ${{ inputs.max_cost }}
         PI_MAX_TURNS: ${{ inputs.max_turns }}
         PATH_TO_PI_EXECUTABLE: ${{ inputs.path_to_pi_executable }}
 
-        # Auth
+        # Auth — set provider-specific env vars that Pi reads natively
         PI_API_KEY: ${{ inputs.api_key }}
         ANTHROPIC_API_KEY: ${{ inputs.api_key }}
         OPENAI_API_KEY: ${{ inputs.api_key }}
+        OPENAI_BASE_URL: ${{ inputs.base_url }}
         GOOGLE_API_KEY: ${{ inputs.api_key }}
 
     - name: Revoke app token

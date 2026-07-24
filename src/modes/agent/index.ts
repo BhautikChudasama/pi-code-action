@@ -72,6 +72,12 @@ export async function prepareAgentMode({
     piArgs += ` --tools ${context.inputs.piTools}`;
   }
 
+  // API key via CLI flag
+  const apiKey = process.env.PI_API_KEY;
+  if (apiKey) {
+    piArgs += ` --api-key ${apiKey}`;
+  }
+
   // Extensions
   if (context.inputs.piExtensions) {
     const extensions = context.inputs.piExtensions.split("\n").filter(Boolean);
