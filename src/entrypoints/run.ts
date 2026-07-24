@@ -8,7 +8,7 @@
 import * as core from "@actions/core";
 import { dirname } from "path";
 import { spawn, execSync } from "child_process";
-import { appendFile } from "fs/promises";
+import { appendFile, mkdir, writeFile } from "fs/promises";
 import { readFileSync } from "fs";
 import { setupGitHubToken } from "../github/token";
 import { checkWritePermissions } from "../github/validation/permissions";
@@ -21,6 +21,47 @@ import { prepareTagMode } from "../modes/tag";
 import { prepareAgentMode } from "../modes/agent";
 import { checkContainsTrigger } from "../github/validation/trigger";
 import { updateTrackingComment } from "../github/operations/comments/update-comment";
+
+/**
+ * Write ~/.pi/agent/models.json to register a custom OpenAI-compatible provider.
+ * Pi reads this file at startup to discover custom models and base URLs.
+ */
+async function setupCustomProvider(): Promise<string | undefined> {
+  const baseUrl = process.env.PI_BASE_URL;
+  if (!baseUrl) return undefined;
+
+  const provider = process.env.PI_PROVIDER || "openai";
+  const model = process.env.PI_MODEL || "gpt-4o";
+  const apiKey = process.env.PI_API_KEY;
+
+  const modelsConfig = {
+    providers: {
+      [provider]: {
+        baseUrl,
+        api: "openai-completions",
+        ...(apiKey ? { apiKey } : {}),
+        models: [
+          {
+            id: model,
+            name: model,
+            input: ["text"],
+            contextWindow: 128000,
+            maxTokens: 16384,
+          },
+        ],
+      },
+    },
+  };
+
+  const piDir = `${process.env.HOME}/.pi/agent`;
+  await mkdir(piDir, { recursive: true });
+  const modelsPath = `${piDir}/models.json`;
+  await writeFile(modelsPath, JSON.stringify(modelsConfig, null, 2));
+  console.log(`Wrote custom provider config to ${modelsPath}`);
+  console.log(`  Provider: ${provider}, Model: ${model}, Base URL: ${baseUrl}`);
+
+  return provider;
+}
 
 /**
  * Build the install command for Pi CLI.
@@ -216,6 +257,9 @@ async function run() {
 
     // Phase 2: Install Pi CLI
     const piExecutable = await installPi();
+
+    // Phase 2.5: Setup custom provider if base_url is provided
+    await setupCustomProvider();
 
     // Phase 3: Run Pi
     const promptFile = `${process.env.RUNNER_TEMP || "/tmp"}/pi-prompts/pi-prompt.txt`;
