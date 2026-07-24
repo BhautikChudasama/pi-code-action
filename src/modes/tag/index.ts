@@ -66,6 +66,19 @@ export async function prepareTagMode({
   const tagModeTools = ["read", "bash", "edit", "write", "grep", "find", "ls"];
   let piArgs = "";
 
+  // Load our GitHub tools extension
+  const extensionPath = `${process.env.GITHUB_ACTION_PATH}/extensions/github-tools.ts`;
+  piArgs += ` -e ${extensionPath}`;
+
+  // Set env vars for the extension
+  process.env.REPO_OWNER = context.repository.owner;
+  process.env.REPO_NAME = context.repository.repo;
+  process.env.PI_COMMENT_ID = commentId.toString();
+  process.env.IS_PR_REVIEW_COMMENT = commentData.isPullRequestReviewComment ? "true" : "false";
+  if (context.isPR) {
+    process.env.PR_NUMBER = context.entityNumber.toString();
+  }
+
   // Set tools
   piArgs += ` --tools ${tagModeTools.join(",")}`;
 
