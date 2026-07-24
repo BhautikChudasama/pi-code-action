@@ -4,20 +4,16 @@ import { isPullRequestReviewCommentEvent } from "../../context";
 
 const GITHUB_SERVER_URL = process.env.GITHUB_SERVER_URL || "https://github.com";
 
-/** Pi logo icon */
-const PI_LOGO_HTML =
-  '<img src="https://raw.githubusercontent.com/BhautikChudasama/pi-code-action/main/assets/pi-icon.png" width="14px" height="14px" style="vertical-align: middle;" />';
-
-/** Animated spinner */
-const SPINNER_HTML =
-  '<img src="https://github.com/user-attachments/assets/5ac382c7-e004-429b-8e35-7feb3e8f9c6f" width="14px" height="14px" style="vertical-align: middle; margin-left: 4px;" />';
+/** Animated Pi logo */
+const PI_SPINNER_HTML =
+  '<img src="https://raw.githubusercontent.com/BhautikChudasama/pi-code-action/main/assets/pi-logo-animation.gif" width="20px" height="20px" style="vertical-align: middle;" />';
 
 export function createJobRunLink(owner: string, repo: string, runId: string): string {
   return `[View job run](${GITHUB_SERVER_URL}/${owner}/${repo}/actions/runs/${runId})`;
 }
 
 function createCommentBody(jobRunLink: string): string {
-  return `${PI_LOGO_HTML} ${SPINNER_HTML}
+  return `${PI_SPINNER_HTML}
 
 ${jobRunLink}`;
 }
