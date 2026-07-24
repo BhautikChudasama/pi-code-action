@@ -96,21 +96,51 @@ export async function updateTrackingComment(opts: UpdateCommentOptions): Promise
     links += ` • [Create PR ➔](${prLinkFromResponse})`;
   }
 
-  // Assemble body
-  let body = `${header}${links}`;
-
-  // Add error details
-  if (!success && error) {
-    body += `\n\n\`\`\`\n${error}\n\`\`\``;
+  // Check if Pi already updated the comment live via update_tracking_comment.
+  // If so, preserve Pi's live content and just prepend the header.
+  let liveContent: string | undefined;
+  try {
+    let currentComment;
+    if (opts.isPullRequestReviewComment) {
+      const resp = await octokit.pulls.getReviewComment({ owner, repo, comment_id: commentId });
+      currentComment = resp.data.body;
+    } else {
+      const resp = await octokit.issues.getComment({ owner, repo, comment_id: commentId });
+      currentComment = resp.data.body;
+    }
+    // If comment no longer contains the spinner, Pi updated it live
+    const hasSpinner = currentComment?.includes("user-attachments/assets/5ac382c7");
+    const hasJobRunLink = currentComment?.includes("/actions/runs/");
+    if (currentComment && !hasSpinner && hasJobRunLink) {
+      // Comment was already updated live — don't overwrite with raw text dump
+      liveContent = currentComment;
+    }
+  } catch {
+    // Can't read current comment, proceed with normal update
   }
 
-  body += "\n\n---\n";
+  // Assemble body
+  let body: string;
 
-  // Add Pi's cleaned response
-  if (piText) {
-    body += `\n${piText}`;
-  } else if (!error) {
-    body += "\n_No text output from Pi._";
+  if (liveContent) {
+    // Pi already wrote the comment live — just prepend the header
+    body = `${header}${links}\n\n---\n\n${liveContent}`;
+  } else {
+    body = `${header}${links}`;
+
+    // Add error details
+    if (!success && error) {
+      body += `\n\n\`\`\`\n${error}\n\`\`\``;
+    }
+
+    body += "\n\n---\n";
+
+    // Add Pi's cleaned response
+    if (piText) {
+      body += `\n${piText}`;
+    } else if (!error) {
+      body += "\n_No text output from Pi._";
+    }
   }
 
   // Use correct API based on comment type (like claude-code-action)
