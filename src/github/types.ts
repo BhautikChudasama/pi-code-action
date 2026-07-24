@@ -79,6 +79,14 @@ export interface CommentPayload {
   body: string;
   user: { login: string };
   created_at: string;
+  /** For PR review comments: the file path */
+  path?: string;
+  /** For PR review comments: the line number */
+  line?: number;
+  /** For PR review comments: the diff context */
+  diff_hunk?: string;
+  /** For PR review comments: parent comment ID (when replying to a thread) */
+  in_reply_to_id?: number;
 }
 
 export interface BranchInfo {

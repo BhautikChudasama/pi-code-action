@@ -31,6 +31,26 @@ export async function createPrompt(
   const commentBody = context.comment?.body || "";
   const userRequest = extractUserRequest(triggerPhrase, commentBody);
 
+  // For PR review comment replies: fetch the parent comment to understand context
+  let parentCommentContext = "";
+  if (context.comment?.in_reply_to_id && context.comment?.path) {
+    // This is a reply to an inline review comment
+    parentCommentContext = `
+<parent_review_comment>
+This is a reply to an inline review comment. The user is asking you to act on THIS specific comment:
+File: ${context.comment.path}${context.comment.line ? `\nLine: ${context.comment.line}` : ""}${context.comment.diff_hunk ? `\nDiff context:\n\`\`\`\n${context.comment.diff_hunk}\n\`\`\`` : ""}
+</parent_review_comment>
+`;
+  } else if (context.comment?.path) {
+    // Direct review comment (not a reply)
+    parentCommentContext = `
+<review_comment_context>
+This comment was made on a specific line in the code:
+File: ${context.comment.path}${context.comment.line ? `\nLine: ${context.comment.line}` : ""}${context.comment.diff_hunk ? `\nDiff context:\n\`\`\`\n${context.comment.diff_hunk}\n\`\`\`` : ""}
+</review_comment_context>
+`;
+  }
+
   // Format GitHub data sections
   const formattedData = formatGitHubDataAsPrompt(githubData);
 
@@ -53,7 +73,7 @@ ${userRequest ? `
 <trigger_comment>
 ${userRequest}
 </trigger_comment>
-` : ""}
+` : ""}${parentCommentContext}
 FIRST: Silently classify what the user is asking. Do NOT mention the classification in your output. Just act accordingly.
 
 A. GREETING or CASUAL MESSAGE (e.g. "hi", "hey", "hello", "thanks"):

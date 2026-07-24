@@ -45,6 +45,31 @@ export async function prepareTagMode({
     triggerUsername: context.actor,
   });
 
+  // For PR review comment replies: fetch the parent comment body
+  if (context.comment?.in_reply_to_id && context.isPR) {
+    try {
+      const { data: parentComment } = await octokit.rest.pulls.getReviewComment({
+        owner: context.repository.owner,
+        repo: context.repository.repo,
+        comment_id: context.comment.in_reply_to_id,
+      });
+      // Enrich the comment with the parent's diff_hunk and path
+      if (!context.comment.diff_hunk) {
+        context.comment.diff_hunk = parentComment.diff_hunk;
+      }
+      if (!context.comment.path) {
+        context.comment.path = parentComment.path;
+      }
+      if (!context.comment.line) {
+        context.comment.line = parentComment.line || parentComment.original_line || undefined;
+      }
+      // Prepend parent body to help Pi understand what to fix
+      context.comment.body = `[Parent review comment by @${parentComment.user?.login}]: ${parentComment.body}\n\n[User reply]: ${context.comment.body}`;
+    } catch (e) {
+      console.error("Failed to fetch parent review comment:", e);
+    }
+  }
+
   // Configure git auth (always needed for potential push operations)
   const user = {
     login: context.inputs.botName,
