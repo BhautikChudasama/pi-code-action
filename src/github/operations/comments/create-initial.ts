@@ -4,7 +4,7 @@ import { isPullRequestReviewCommentEvent } from "../../context";
 
 const GITHUB_SERVER_URL = process.env.GITHUB_SERVER_URL || "https://github.com";
 
-/** Animated Pi logo */
+/** Animated Shelly logo */
 const PI_SPINNER_HTML =
   '<img src="https://raw.githubusercontent.com/BhautikChudasama/pi-code-action/main/assets/pi-logo-animation.gif" width="20px" height="20px" style="vertical-align: middle;" />';
 
@@ -23,7 +23,7 @@ ${jobRunLink}`;
 }
 
 /**
- * Create the initial tracking comment showing Pi is working.
+ * Create the initial tracking comment showing Shelly is working.
  * For PR review comments: replies inline in the same thread (like claude-code-action).
  * For issue/PR comments: posts as a regular comment.
  */

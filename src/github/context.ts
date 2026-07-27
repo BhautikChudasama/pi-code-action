@@ -13,7 +13,7 @@ function parseInputs(): ActionInputs {
 
   return {
     prompt: process.env.PROMPT || undefined,
-    triggerPhrase: process.env.TRIGGER_PHRASE || "@pi",
+    triggerPhrase: process.env.TRIGGER_PHRASE || "@shelly",
     assigneeTrigger: process.env.ASSIGNEE_TRIGGER || undefined,
     labelTrigger: process.env.LABEL_TRIGGER || undefined,
     baseBranch: process.env.BASE_BRANCH || undefined,

@@ -1,5 +1,5 @@
 /**
- * Pi extension: Kubernetes tools
+ * Shelly extension: Kubernetes tools
  *
  * Safe, read-heavy k8s operations for debugging and inspection.
  * Uses kubectl under the hood.

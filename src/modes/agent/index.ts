@@ -39,7 +39,7 @@ export async function prepareAgentMode({
   }
 
   // Create prompt directory
-  const promptDir = `${process.env.RUNNER_TEMP || "/tmp"}/pi-prompts`;
+  const promptDir = `${process.env.RUNNER_TEMP || "/tmp"}/shelly-prompts`;
   await rm(promptDir, { recursive: true, force: true });
   await mkdir(promptDir, { recursive: true });
 
@@ -47,7 +47,7 @@ export async function prepareAgentMode({
   const promptContent =
     context.inputs.prompt ||
     `Repository: ${context.repository.owner}/${context.repository.repo}`;
-  await writeFile(`${promptDir}/pi-prompt.txt`, promptContent);
+  await writeFile(`${promptDir}/shelly-prompt.txt`, promptContent);
 
   // Detect branches
   const defaultBranch = context.repository.default_branch || "main";

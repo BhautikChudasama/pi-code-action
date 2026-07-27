@@ -19,9 +19,9 @@ export interface UpdateCommentOptions {
 }
 
 /**
- * Update the tracking comment with final status and Pi's response.
+ * Update the tracking comment with final status and Shelly's response.
  * Matches claude-code-action's format:
- *   **Pi finished @user's task in Xm Ys** —— [View job] • [`branch`] • [Create PR ➔]
+ *   **Shelly finished @user's task in Xm Ys** —— [View job] • [`branch`] • [Create PR ➔]
  *   ---
  *   <Pi's cleaned response>
  */
@@ -42,7 +42,7 @@ export async function updateTrackingComment(opts: UpdateCommentOptions): Promise
   const { owner, repo } = context.repository;
   const runId = process.env.GITHUB_RUN_ID;
 
-  // Parse Pi's JSONL output
+  // Parse Shelly's JSONL output
   let piText = "";
   let prLinkFromResponse: string | undefined;
   let durationStr = "";
@@ -73,11 +73,11 @@ export async function updateTrackingComment(opts: UpdateCommentOptions): Promise
   // Build header
   let header = "";
   if (success) {
-    header = `**Pi finished @${context.actor}'s task`;
+    header = `**Shelly finished @${context.actor}'s task`;
     if (durationStr) header += ` in ${durationStr}`;
     header += "**";
   } else {
-    header = "**Pi encountered an error";
+    header = "**Shelly encountered an error";
     if (durationStr) header += ` after ${durationStr}`;
     header += "**";
   }
@@ -96,8 +96,8 @@ export async function updateTrackingComment(opts: UpdateCommentOptions): Promise
     links += ` • [Create PR ➔](${prLinkFromResponse})`;
   }
 
-  // Check if Pi already updated the comment live via update_tracking_comment.
-  // If so, preserve Pi's live content and just prepend the header.
+  // Check if Shelly already updated the comment live via update_tracking_comment.
+  // If so, preserve Shelly's live content and just prepend the header.
   let liveContent: string | undefined;
   try {
     let commentData: { body?: string; created_at: string; updated_at: string };
@@ -108,7 +108,7 @@ export async function updateTrackingComment(opts: UpdateCommentOptions): Promise
       const resp = await octokit.issues.getComment({ owner, repo, comment_id: commentId });
       commentData = resp.data;
     }
-    // If comment was edited after creation, Pi updated it live
+    // If comment was edited after creation, Shelly updated it live
     const wasEdited = commentData.created_at !== commentData.updated_at;
     if (wasEdited && commentData.body) {
       liveContent = commentData.body;
@@ -121,7 +121,7 @@ export async function updateTrackingComment(opts: UpdateCommentOptions): Promise
   let body: string;
 
   if (liveContent) {
-    // Pi already wrote the comment live — just prepend the header
+    // Shelly already wrote the comment live — just prepend the header
     body = `${header}${links}\n\n---\n\n${liveContent}`;
   } else {
     body = `${header}${links}`;

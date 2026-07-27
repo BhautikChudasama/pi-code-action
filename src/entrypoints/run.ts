@@ -2,7 +2,7 @@
 
 /**
  * Unified entrypoint for the Pi Code Action.
- * Orchestrates: prepare → install Pi CLI → execute Pi → cleanup.
+ * Orchestrates: prepare → install Shelly CLI → execute Pi → cleanup.
  */
 
 import * as core from "@actions/core";
@@ -64,14 +64,14 @@ async function setupCustomProvider(): Promise<string | undefined> {
 }
 
 /**
- * Build the install command for Pi CLI.
+ * Build the install command for Shelly CLI.
  */
 export function buildInstallCommand(): string {
   return `set -o pipefail; curl -fsSL https://pi.dev/install.sh | sh`;
 }
 
 /**
- * Install Pi CLI with retry logic.
+ * Install Shelly CLI with retry logic.
  * Returns the path to the pi executable.
  */
 async function installPi(): Promise<string> {
@@ -80,7 +80,7 @@ async function installPi(): Promise<string> {
     if (/[\x00-\x1f\x7f]/.test(customExecutable)) {
       throw new Error("PATH_TO_PI_EXECUTABLE contains control characters");
     }
-    console.log(`Using custom Pi executable: ${customExecutable}`);
+    console.log(`Using custom Shelly executable: ${customExecutable}`);
     const piDir = dirname(customExecutable);
     const githubPath = process.env.GITHUB_PATH;
     if (githubPath) {
@@ -90,7 +90,7 @@ async function installPi(): Promise<string> {
     return customExecutable;
   }
 
-  console.log("Installing Pi CLI...");
+  console.log("Installing Shelly CLI...");
 
   for (let attempt = 1; attempt <= 3; attempt++) {
     console.log(`Installation attempt ${attempt}...`);
@@ -105,7 +105,7 @@ async function installPi(): Promise<string> {
         });
         child.on("error", reject);
       });
-      console.log("Pi CLI installed successfully");
+      console.log("Shelly CLI installed successfully");
 
       // Pi installs via npm install -g, so find the actual binary location
       // Try: npm global bin, then common paths, then `which`
@@ -126,11 +126,11 @@ async function installPi(): Promise<string> {
           piPath = "pi"; // Hope it's on PATH
         }
       }
-      console.log(`Pi executable: ${piPath}`);
+      console.log(`Shelly executable: ${piPath}`);
       return piPath;
     } catch (error) {
       if (attempt === 3) {
-        throw new Error(`Failed to install Pi CLI after 3 attempts: ${error}`);
+        throw new Error(`Failed to install Shelly CLI after 3 attempts: ${error}`);
       }
       console.log("Installation failed, retrying...");
       await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -140,14 +140,14 @@ async function installPi(): Promise<string> {
 }
 
 /**
- * Run Pi CLI with the given prompt file and arguments.
+ * Run Shelly CLI with the given prompt file and arguments.
  */
 async function runPi(
   piExecutable: string,
   promptFile: string,
   piArgs: string,
 ): Promise<{ success: boolean; outputFile?: string }> {
-  const outputFile = `${process.env.RUNNER_TEMP || "/tmp"}/pi-output.json`;
+  const outputFile = `${process.env.RUNNER_TEMP || "/tmp"}/shelly-output.json`;
 
   // Build the command: pi -p @promptFile --mode json <args>
   const cmd = `${piExecutable} -p @${promptFile} --mode json ${piArgs} 2>&1 | tee ${outputFile}`;
@@ -192,7 +192,7 @@ async function runPi(
     });
 
     child.on("error", (error) => {
-      console.error(`Pi process error: ${error}`);
+      console.error(`Shelly process error: ${error}`);
       resolve({ success: false, outputFile });
     });
   });
@@ -258,14 +258,14 @@ async function run() {
     isPullRequestReviewComment = prepareResult.isPullRequestReviewComment || false;
     prepareCompleted = true;
 
-    // Phase 2: Install Pi CLI
+    // Phase 2: Install Shelly CLI
     const piExecutable = await installPi();
 
     // Phase 2.5: Setup custom provider if base_url is provided
     await setupCustomProvider();
 
     // Phase 3: Run Pi
-    const promptFile = `${process.env.RUNNER_TEMP || "/tmp"}/pi-prompts/pi-prompt.txt`;
+    const promptFile = `${process.env.RUNNER_TEMP || "/tmp"}/shelly-prompts/shelly-prompt.txt`;
 
     const result = await runPi(piExecutable, promptFile, prepareResult.piArgs);
     piSuccess = result.success;
@@ -277,7 +277,7 @@ async function run() {
     core.setOutput("github_token", githubToken);
 
     if (!piSuccess) {
-      core.setFailed("Pi execution failed");
+      core.setFailed("Shelly execution failed");
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -296,7 +296,7 @@ async function run() {
     ) {
       try {
         let executionOutput: string | undefined;
-        const outputFile = `${process.env.RUNNER_TEMP || "/tmp"}/pi-output.json`;
+        const outputFile = `${process.env.RUNNER_TEMP || "/tmp"}/shelly-output.json`;
         try {
           executionOutput = readFileSync(outputFile, "utf-8");
         } catch {

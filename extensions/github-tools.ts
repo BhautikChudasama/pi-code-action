@@ -1,5 +1,5 @@
 /**
- * Pi extension: GitHub Tools for pi-code-action
+ * Shelly extension: GitHub Tools for pi-code-action
  *
  * Tools:
  * - update_tracking_comment: Live comment updates during execution

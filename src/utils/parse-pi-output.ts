@@ -1,5 +1,5 @@
 /**
- * Parse Pi's JSONL (JSON Lines) output to extract the assistant's text response
+ * Parse Shelly's JSONL (JSON Lines) output to extract the assistant's text response
  * and execution metadata.
  */
 
@@ -118,7 +118,7 @@ export function parsePiOutput(rawOutput: string): PiExecutionResult {
 }
 
 /**
- * Clean Pi's response text for display in a GitHub comment.
+ * Clean Shelly's response text for display in a GitHub comment.
  * - Extracts PR creation link and returns it separately
  * - Removes duplicate "View job run" and "View branch" links (we add those in the header)
  * - Removes trailing link sections

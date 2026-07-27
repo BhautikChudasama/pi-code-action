@@ -1,4 +1,4 @@
-name: "Pi Code Action"
+name: "Shelly Code Action"
 description: "GitHub automation with Pi coding agent. Auto-detects mode: @pi mentions (tag mode) or prompt input (agent mode)."
 branding:
   icon: "terminal"
@@ -8,14 +8,14 @@ inputs:
   trigger_phrase:
     description: "The trigger phrase to look for in comments or issue body"
     required: false
-    default: "@pi"
+    default: "@shelly"
   assignee_trigger:
     description: "The assignee username that triggers the action (e.g. @pi)"
     required: false
   label_trigger:
     description: "The label that triggers the action (e.g. pi)"
     required: false
-    default: "pi"
+    default: "shelly"
 
   # Pi configuration
   prompt:
@@ -66,7 +66,7 @@ inputs:
   branch_prefix:
     description: "The prefix to use for Pi branches"
     required: false
-    default: "pi/"
+    default: "shelly/"
 
   # Behavior configuration
   allowed_bots:
@@ -84,7 +84,7 @@ inputs:
   bot_name:
     description: "GitHub username to use for git operations"
     required: false
-    default: "pi[bot]"
+    default: "shelly[bot]"
   track_progress:
     description: "Force tag mode with tracking comments for pull_request and issue events"
     required: false
@@ -126,7 +126,7 @@ runs:
         cd ${GITHUB_ACTION_PATH}
         bun install --production
 
-    - name: Run Pi Code Action
+    - name: Run Shelly Code Action
       id: run
       shell: bash
       run: |

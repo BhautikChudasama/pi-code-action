@@ -1,16 +1,16 @@
 <p align="center">
-  <img src="assets/pi-logo.png" width="80" height="80" alt="Pi Logo" />
+  <img src="assets/pi-logo.png" width="80" height="80" alt="Shelly Logo" />
 </p>
 
-<h1 align="center">Pi Code Action</h1>
+<h1 align="center">Shelly Code Action</h1>
 
-A GitHub Action that brings [Pi](https://pi.dev) coding agent to your issues and pull requests. Mention `@pi` in a comment and it gets to work -- reviewing code, implementing features, fixing bugs, rebasing branches, and more.
+A GitHub Action that brings [Pi](https://pi.dev) coding agent to your issues and pull requests. Mention `@shelly` in a comment and it gets to work -- reviewing code, implementing features, fixing bugs, rebasing branches, and more.
 
 Works with any OpenAI-compatible LLM endpoint. Bring your own model.
 
 ## Quick Start
 
-Create `.github/workflows/pi.yml`:
+Create `.github/workflows/shelly.yml`:
 
 ```yaml
 name: Pi
@@ -41,38 +41,38 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-Add your API key as a repository secret (`PI_API_KEY`), push the workflow, and comment `@pi` on any issue or PR.
+Add your API key as a repository secret (`PI_API_KEY`), push the workflow, and comment `@shelly` on any issue or PR.
 
 ## What can it do?
 
 **On issues:**
-- `@pi implement this feature` -- creates a branch, writes code, pushes, gives you a PR link
-- `@pi what does this codebase do?` -- reads the code and answers
-- `@pi add the "bug" label` -- manages labels
-- `@pi hi` -- just says hi, no branches or commits
+- `@shelly implement this feature` -- creates a branch, writes code, pushes, gives you a PR link
+- `@shelly what does this codebase do?` -- reads the code and answers
+- `@shelly add the "bug" label` -- manages labels
+- `@shelly hi` -- just says hi, no branches or commits
 
 **On pull requests:**
-- `@pi review this` -- posts inline comments on specific lines
-- `@pi fix the failing test` -- reads CI logs, fixes the code, pushes
-- `@pi rebase` -- rebases onto base branch
-- `@pi resolve the fixed review comments` -- checks what's fixed and resolves threads
+- `@shelly review this` -- posts inline comments on specific lines
+- `@shelly fix the failing test` -- reads CI logs, fixes the code, pushes
+- `@shelly rebase` -- rebases onto base branch
+- `@shelly resolve the fixed review comments` -- checks what's fixed and resolves threads
 
 **On inline review comments:**
-- Reply `@pi fix this` to any review comment -- Pi reads the parent comment, understands the context, and fixes exactly that
+- Reply `@shelly fix this` to any review comment -- Pi reads the parent comment, understands the context, and fixes exactly that
 
 ## How it works
 
-1. You comment `@pi` on an issue or PR
+1. You comment `@shelly` on an issue or PR
 2. Pi posts a tracking comment with a spinner
 3. Pi reads the issue/PR context, comments, and diff
 4. Pi thinks, uses tools, and updates the comment live as it works
 5. When done, the comment gets a header with duration and links
 
-For issues that need code changes, Pi creates a branch and pushes commits. For questions and reviews, it just replies -- no unnecessary branches.
+For issues that need code changes, Shelly creates a branch and pushes commits. For questions and reviews, it just replies -- no unnecessary branches.
 
 ## Two modes
 
-**Tag mode** (default) -- triggered by `@pi` mentions. Fetches full GitHub context, creates tracking comments, uses all 18 tools.
+**Tag mode** (default) -- triggered by `@shelly` mentions. Fetches full GitHub context, creates tracking comments, uses all 18 tools.
 
 **Agent mode** -- triggered when `prompt` input is provided. Runs the prompt directly without tracking comments. Good for automation workflows like CI/CD.
 
@@ -89,7 +89,7 @@ For issues that need code changes, Pi creates a branch and pushes commits. For q
 
 ## Tools
 
-Pi comes with 18 built-in tools plus web search, and optional integrations for PostgreSQL and Kubernetes:
+Shelly comes with 18 built-in tools plus web search, and optional integrations for PostgreSQL and Kubernetes:
 
 | Category | Tools |
 |---|---|
@@ -107,7 +107,7 @@ PostgreSQL and Kubernetes tools activate automatically when the right env vars a
 
 ## PostgreSQL Integration
 
-Set `DATABASE_URL` and Pi can query your database, inspect schemas, and debug slow queries. All queries are **read-only** -- INSERT, UPDATE, DELETE, DROP, and TRUNCATE are blocked.
+Set `DATABASE_URL` and Shelly can query your database, inspect schemas, and debug slow queries. All queries are **read-only** -- INSERT, UPDATE, DELETE, DROP, and TRUNCATE are blocked.
 
 ```yaml
 - uses: BhautikChudasama/pi-code-action@main
@@ -118,13 +118,13 @@ Set `DATABASE_URL` and Pi can query your database, inspect schemas, and debug sl
 ```
 
 Then ask things like:
-- `@pi show me the schema of the users table`
-- `@pi why is this query slow?` -- runs EXPLAIN ANALYZE
-- `@pi how many active connections are there?`
+- `@shelly show me the schema of the users table`
+- `@shelly why is this query slow?` -- runs EXPLAIN ANALYZE
+- `@shelly how many active connections are there?`
 
 ## Kubernetes Integration
 
-Set `KUBECONFIG` or `KUBE_NAMESPACE` and Pi can inspect your cluster, read logs, and restart pods. Destructive operations are blocked -- no deleting PVCs, PVs, secrets, namespaces. No port-forward, no apply, no secret access.
+Set `KUBECONFIG` or `KUBE_NAMESPACE` and Shelly can inspect your cluster, read logs, and restart pods. Destructive operations are blocked -- no deleting PVCs, PVs, secrets, namespaces. No port-forward, no apply, no secret access.
 
 ```yaml
 - uses: BhautikChudasama/pi-code-action@main
@@ -136,11 +136,11 @@ Set `KUBECONFIG` or `KUBE_NAMESPACE` and Pi can inspect your cluster, read logs,
 ```
 
 Then ask things like:
-- `@pi are all pods healthy?`
-- `@pi show me the logs for the api pod`
-- `@pi why is the deployment stuck?` -- checks events and rollout status
-- `@pi restart the api deployment`
-- `@pi what's the CPU/memory usage?`
+- `@shelly are all pods healthy?`
+- `@shelly show me the logs for the api pod`
+- `@shelly why is the deployment stuck?` -- checks events and rollout status
+- `@shelly restart the api deployment`
+- `@shelly what's the CPU/memory usage?`
 
 Pod deletion is allowed (for stuck/crashlooping pods), but only one at a time -- no wildcards or `--all`.
 
@@ -155,7 +155,7 @@ Pod deletion is allowed (for stuck/crashlooping pods), but only one at a time --
 | `api_key` | API key for the LLM provider | -- |
 | `base_url` | Custom OpenAI-compatible endpoint URL | -- |
 | `github_token` | GitHub token for API access | `GITHUB_TOKEN` |
-| `trigger_phrase` | What triggers Pi | `@pi` |
+| `trigger_phrase` | What triggers Pi | `@shelly` |
 | `thinking_level` | Reasoning depth (`off`, `low`, `medium`, `high`, `max`) | `off` |
 | `branch_prefix` | Prefix for new branches | `pi/` |
 | `extensions` | Additional Pi extensions to load (newline-separated) | -- |

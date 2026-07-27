@@ -23,11 +23,11 @@ export async function createPrompt(
   context: EntityContext,
   integrations: IntegrationFlags = {},
 ): Promise<string> {
-  const promptDir = `${process.env.RUNNER_TEMP || "/tmp"}/pi-prompts`;
+  const promptDir = `${process.env.RUNNER_TEMP || "/tmp"}/shelly-prompts`;
   await rm(promptDir, { recursive: true, force: true });
   await mkdir(promptDir, { recursive: true });
 
-  const promptPath = `${promptDir}/pi-prompt.txt`;
+  const promptPath = `${promptDir}/shelly-prompt.txt`;
   const repository = `${context.repository.owner}/${context.repository.repo}`;
   const entityType = githubData.isPR ? "pull request" : "issue";
   const jobUrl = `${GITHUB_SERVER_URL}/${repository}/actions/runs/${process.env.GITHUB_RUN_ID}`;
@@ -61,7 +61,7 @@ File: ${context.comment.path}${context.comment.line ? `\nLine: ${context.comment
   const formattedData = formatGitHubDataAsPrompt(githubData);
 
   // Build the prompt (mirroring claude-code-action structure)
-  const prompt = `You are Pi, an AI coding assistant running as a GitHub Action. Think carefully as you analyze the context and respond appropriately. Here's the context for your current task:
+  const prompt = `You are Shelly, an AI coding assistant running as a GitHub Action. Think carefully as you analyze the context and respond appropriately. Here's the context for your current task:
 
 <formatted_context>
 ${formattedData}
@@ -99,7 +99,7 @@ C. CODE REVIEW (e.g. "review this", "check the code"):
 D. CODE CHANGE (e.g. "fix this", "add X", "implement Y", "initialize Z"):
 ${workingBranch ? `   - You are already on the PR branch: ${workingBranch}. Do NOT create new branches.
 ` : `   - You need to create a branch first since this is an issue (not a PR):
-     \`git checkout -b pi/issue-${githubData.issueOrPrNumber}-$(date +%s) origin/${baseBranch}\`
+     \`git checkout -b shelly/issue-${githubData.issueOrPrNumber}-$(date +%s) origin/${baseBranch}\`
 `}   - Git workflow: \`git add <files>\` -> commit -> \`git push origin HEAD\`
    - Use conventional commits: \`<type>(<scope>): <short summary>\`
      Types: feat, fix, docs, style, refactor, test, chore, perf, ci, build

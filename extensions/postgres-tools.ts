@@ -1,5 +1,5 @@
 /**
- * Pi extension: PostgreSQL tools
+ * Shelly extension: PostgreSQL tools
  *
  * Read-only database tools for querying, inspecting schema, and debugging.
  * Connection via DATABASE_URL env var.
