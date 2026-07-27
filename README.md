@@ -4,7 +4,7 @@
 
 <h1 align="center">Shelly Code Action</h1>
 
-A GitHub Action that brings [Pi](https://pi.dev) coding agent to your issues and pull requests. Mention `@shelly` in a comment and it gets to work -- reviewing code, implementing features, fixing bugs, rebasing branches, and more.
+A GitHub Action that brings the Shelly coding agent to your issues and pull requests. Mention `@shelly` in a comment and it gets to work -- reviewing code, implementing features, fixing bugs, rebasing branches, and more.
 
 Works with any OpenAI-compatible LLM endpoint. Bring your own model.
 
@@ -13,7 +13,7 @@ Works with any OpenAI-compatible LLM endpoint. Bring your own model.
 Create `.github/workflows/shelly.yml`:
 
 ```yaml
-name: Pi
+name: Shelly
 on:
   issue_comment:
     types: [created]
@@ -21,10 +21,10 @@ on:
     types: [created]
 
 jobs:
-  pi:
+  shelly:
     if: |
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@pi')) ||
-      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@pi'))
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@shelly')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@shelly'))
     runs-on: ubuntu-latest
     permissions:
       contents: write
