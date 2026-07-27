@@ -123,6 +123,7 @@ export async function prepareTagMode({
     "get_ci_status",
     "get_workflow_run_details",
     "download_job_log",
+    "cancel_workflow_run",
     "get_pr_diff",
     "create_inline_comment",
     "list_review_comments",

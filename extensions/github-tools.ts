@@ -208,6 +208,32 @@ export default function (pi: ExtensionAPI) {
         }
       },
     });
+
+    // ── Tool: Cancel Workflow Run ──
+
+    pi.registerTool({
+      name: "cancel_workflow_run",
+      label: "Cancel Workflow",
+      description: "Cancel a running or queued GitHub Actions workflow run. Use get_ci_status first to find the run ID.",
+      promptSnippet: "Cancel a GitHub Actions workflow run",
+      parameters: Type.Object({
+        run_id: Type.Number({ description: "The workflow run ID to cancel (get from get_ci_status)" }),
+      }),
+      async execute(_id, params) {
+        try {
+          await githubApi(`/repos/${owner}/${repo}/actions/runs/${params.run_id}/cancel`, {
+            method: "POST",
+          });
+          return {
+            content: [{ type: "text", text: `Workflow run ${params.run_id} cancelled.` }],
+            details: {},
+          };
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : String(error);
+          return { content: [{ type: "text", text: `Error: ${msg}` }], details: {} };
+        }
+      },
+    });
   }
 
   // ── Tool 3: Create Inline PR Review Comment ──
